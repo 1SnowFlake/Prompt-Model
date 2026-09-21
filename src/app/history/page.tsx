@@ -109,7 +109,8 @@ export default function HistoryPage() {
 
   const formatDate = (timestamp: number) => {
     if (!timestamp) return '';
-    const date = new Date(timestamp);
+    const ms = timestamp < 1e11 ? timestamp * 1000 : timestamp;
+    const date = new Date(ms);
     const now = new Date();
     const diffHours = Math.abs(now.getTime() - date.getTime()) / 36e5;
     

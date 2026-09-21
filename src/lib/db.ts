@@ -284,8 +284,17 @@ export function getConversation(id: string) {
 
 export function getAllConversations() {
   return getDb()
-    .prepare('SELECT * FROM conversations ORDER BY updated_at DESC')
-    .all() as { id: string; title: string; created_at: number; updated_at: number }[];
+    .prepare(`
+      SELECT c.*,
+        COUNT(m.id) as message_count,
+        COALESCE(SUM(m.cost), 0) as total_cost,
+        GROUP_CONCAT(DISTINCT m.model) as models_used
+      FROM conversations c
+      LEFT JOIN messages m ON c.id = m.conversation_id
+      GROUP BY c.id
+      ORDER BY c.updated_at DESC
+    `)
+    .all() as { id: string; title: string; created_at: number; updated_at: number; message_count: number; total_cost: number; models_used?: string }[];
 }
 
 export function deleteConversation(id: string) {

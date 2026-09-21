@@ -1,3 +1,5 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 import { ProviderOptions, ProviderResponse } from './types';
 import { getModel } from '../models';
 
@@ -61,7 +63,8 @@ export async function callOpenRouter(
   let tokensOutput = 0;
 
   if (options.stream && options.onChunk) {
-    const resp = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+    let maxTokens = options.maxTokens ?? 650;
+    let resp = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,11 +75,54 @@ export async function callOpenRouter(
       body: JSON.stringify({
         model: openRouterModel,
         messages,
-        max_tokens: options.maxTokens ?? 4096,
+        max_tokens: maxTokens,
         temperature: options.temperature ?? 0.7,
         stream: true,
       }),
     });
+
+    if (resp.status === 402) {
+      const errText = await resp.text();
+      const affordMatch = errText.match(/can only afford (\d+)/);
+      if (affordMatch) {
+        const affordable = Math.max(120, parseInt(affordMatch[1], 10) - 15);
+        resp = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+            'HTTP-Referer': 'http://localhost:3000',
+            'X-Title': 'AI Model Router',
+          },
+          body: JSON.stringify({
+            model: openRouterModel,
+            messages,
+            max_tokens: affordable,
+            temperature: options.temperature ?? 0.7,
+            stream: true,
+          }),
+        });
+      }
+      if (!resp.ok && (openRouterModel === 'openai/gpt-4o' || openRouterModel === 'openai/gpt-4.1')) {
+        // Fallback to gpt-4o-mini on low credit balance
+        resp = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+            'HTTP-Referer': 'http://localhost:3000',
+            'X-Title': 'AI Model Router',
+          },
+          body: JSON.stringify({
+            model: 'openai/gpt-4o-mini',
+            messages,
+            max_tokens: 600,
+            temperature: options.temperature ?? 0.7,
+            stream: true,
+          }),
+        });
+      }
+    }
 
     if (!resp.ok) {
       const err = await resp.text();

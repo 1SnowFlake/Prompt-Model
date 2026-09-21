@@ -574,9 +574,10 @@ function ChatPageContent() {
                 const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant' && m.routingExplanation);
                 if (!lastAssistant) return <p className="text-muted text-sm">No routing data yet.</p>;
                 return (
-                  <pre className={styles.explanationText}>
-                    {lastAssistant.routingExplanation}
-                  </pre>
+                  <div
+                    className={styles.explanationText}
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(lastAssistant.routingExplanation) }}
+                  />
                 );
               })()
             )}

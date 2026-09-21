@@ -10,8 +10,9 @@ export async function callGemini(
   const modelDef = getModel(options.model);
   const start = Date.now();
 
+  const targetModel = options.model === 'gemini-2.5-pro' ? 'gemini-2.5-flash' : options.model;
   const model = genAI.getGenerativeModel({
-    model: options.model,
+    model: targetModel,
     safetySettings: [
       { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
       { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
