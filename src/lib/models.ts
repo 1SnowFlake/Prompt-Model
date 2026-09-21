@@ -231,6 +231,22 @@ export const MODEL_REGISTRY: Record<string, ModelDefinition> = {
     maxOutputTokens: 4096,
     description: 'Mistral 7B running locally via Ollama — fast and free.',
   },
+  'qwen2.5-coder:7b': {
+    id: 'qwen2.5-coder:7b',
+    name: 'Qwen 2.5 Coder (7B)',
+    provider: 'ollama',
+    capabilities: ['code', 'conversation', 'reasoning', 'analysis'],
+    contextWindow: 32768,
+    costPer1kInputTokens: 0,
+    costPer1kOutputTokens: 0,
+    qualityScore: 84,
+    speedScore: 80,
+    taskScores: { code: 94, conversation: 82, analysis: 80, reasoning: 82 },
+    supportsVision: false,
+    supportsStreaming: true,
+    maxOutputTokens: 4096,
+    description: 'Alibaba Qwen 2.5 Coder 7B running locally via Ollama — private and free.',
+  },
 };
 
 export function getModelsByProvider(provider: ProviderName): ModelDefinition[] {

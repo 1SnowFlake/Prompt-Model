@@ -18,12 +18,27 @@ export async function callOllama(
   let tokensInput = 0;
   let tokensOutput = 0;
 
+  let targetModel = options.model;
+  try {
+    const tagsRes = await fetch(`${baseUrl}/api/tags`, { signal: AbortSignal.timeout(2000) });
+    if (tagsRes.ok) {
+      const tagsData = await tagsRes.json();
+      const installed: string[] = (tagsData.models || []).map((m: { name: string }) => m.name);
+      if (installed.length > 0 && !installed.includes(targetModel)) {
+        const match = installed.find((m) => m.startsWith(targetModel) || targetModel.startsWith(m.split(':')[0]));
+        targetModel = match || installed[0];
+      }
+    }
+  } catch {
+    // ignore
+  }
+
   if (options.stream && options.onChunk) {
     const resp = await fetch(`${baseUrl}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: options.model,
+        model: targetModel,
         messages,
         stream: true,
         options: {
@@ -73,7 +88,7 @@ export async function callOllama(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: options.model,
+        model: targetModel,
         messages,
         stream: false,
         options: {
