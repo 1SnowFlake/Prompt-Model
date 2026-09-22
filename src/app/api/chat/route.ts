@@ -69,15 +69,26 @@ export async function POST(req: NextRequest) {
       return m;
     });
 
+    const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL_ENV;
+    const ollamaBaseUrl = getSetting('ollama_base_url') ?? 'http://localhost:11434';
+    const isOllamaLocal = ollamaBaseUrl.includes('localhost') || ollamaBaseUrl.includes('127.0.0.1');
+
     // Determine available models (those with API keys)
     const keyStatuses = getAllModels().map((m) => {
       if (m.provider === 'ollama') {
-        return { id: m.id, available: true }; // Ollama always available if running
+        return { id: m.id, available: isVercel && isOllamaLocal ? false : true };
       }
       const key = getApiKey(m.provider);
       return { id: m.id, available: !!key && key.enabled };
     });
     const availableModels = new Set(keyStatuses.filter((s) => s.available).map((s) => s.id));
+
+    if (availableModels.size === 0) {
+      return NextResponse.json(
+        { error: 'No AI models are available. Please configure your API key in Settings or Vercel Environment Variables.' },
+        { status: 400 }
+      );
+    }
 
     // Route to best model
     const decision = route(chatMessages, !!imageBase64, routingMode, availableModels, manualModel);
