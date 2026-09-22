@@ -44,7 +44,8 @@ const PROVIDER_COLORS: Record<string, string> = {
   ollama: '#8b5cf6',
 };
 
-function renderMarkdown(text: string): string {
+function renderMarkdown(text: string = ''): string {
+  if (!text) return '';
   return text
     .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code class="lang-$1">$2</code></pre>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
@@ -576,7 +577,7 @@ function ChatPageContent() {
                 return (
                   <div
                     className={styles.explanationText}
-                    dangerouslySetInnerHTML={{ __html: renderMarkdown(lastAssistant.routingExplanation) }}
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(lastAssistant.routingExplanation ?? '') }}
                   />
                 );
               })()
